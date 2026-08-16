@@ -1,8 +1,10 @@
 export default function LogoMark() {
   return (
-    <span className="logo-mark" aria-hidden="true">
-      <span className="logo-mark-orbit" />
-      <span className="logo-mark-core" />
-    </span>
+    <img
+      className="logo-mark"
+      src={`${import.meta.env.BASE_URL}haotrace-icon.png`}
+      alt=""
+      aria-hidden="true"
+    />
   )
 }
