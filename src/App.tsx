@@ -7,6 +7,16 @@ import TimelinePage from './pages/TimelinePage'
 import LogoMark from './components/LogoMark'
 
 const ease = [0.22, 1, 0.36, 1] as const
+const appBasePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+function getAppPath(pathname: string) {
+  if (!appBasePath) return pathname || '/'
+  if (pathname === appBasePath) return '/'
+  if (pathname.startsWith(`${appBasePath}/`)) {
+    return pathname.slice(appBasePath.length) || '/'
+  }
+  return pathname || '/'
+}
 
 export function Header() {
   return (
@@ -22,7 +32,8 @@ export function Header() {
 
 function PageFrame({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const isLandingPage = location.pathname === '/' || location.pathname === '/search'
+  const appPath = getAppPath(location.pathname)
+  const isLandingPage = appPath === '/' || appPath === '/search'
   return (
     <div className={`app-shell${isLandingPage ? ' landing-shell' : ''}`}>
       {!isLandingPage && <Header />}
