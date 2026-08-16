@@ -1,50 +1,20 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { LockKeyhole, Search, Sparkles } from 'lucide-react'
+import { Link, Route, Routes, useLocation } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
 import HomePage from './pages/HomePage'
-import SearchPage from './pages/SearchPage'
 import ConversationPage from './pages/ConversationPage'
 import TimelinePage from './pages/TimelinePage'
+import LogoMark from './components/LogoMark'
 
 const ease = [0.22, 1, 0.36, 1] as const
-
-function LogoMark() {
-  return (
-    <span className="logo-mark" aria-hidden="true">
-      <span className="logo-mark-dot" />
-      <span className="logo-mark-line logo-mark-line-a" />
-      <span className="logo-mark-line logo-mark-line-b" />
-    </span>
-  )
-}
 
 export function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link to="/" className="brand" aria-label="浩迹 HaoTrace 首页">
+        <Link to="/" className="brand" aria-label="返回首页">
           <LogoMark />
-          <span className="brand-copy">
-            <strong>浩迹</strong>
-            <span>HaoTrace</span>
-          </span>
         </Link>
-
-        <nav className="main-nav" aria-label="主导航">
-          <NavLink to="/search" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <Search size={15} strokeWidth={1.8} aria-hidden="true" />
-            Search
-          </NavLink>
-          <NavLink to="/timeline" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            Timeline
-          </NavLink>
-          <a href="#about" className="nav-link nav-about">About</a>
-        </nav>
-
-        <div className="private-badge">
-          <LockKeyhole size={13} strokeWidth={1.7} aria-hidden="true" />
-          <span>Private space</span>
-        </div>
       </div>
     </header>
   )
@@ -52,7 +22,7 @@ export function Header() {
 
 function PageFrame({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const isLandingPage = location.pathname === '/'
+  const isLandingPage = location.pathname === '/' || location.pathname === '/search'
   return (
     <div className={`app-shell${isLandingPage ? ' landing-shell' : ''}`}>
       {!isLandingPage && <Header />}
@@ -78,7 +48,7 @@ export default function App() {
     <PageFrame>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/search" element={<SearchPage />} />
+        <Route path="/search" element={<HomePage />} />
         <Route path="/conversation/:conversationId" element={<ConversationPage />} />
         <Route path="/timeline" element={<TimelinePage />} />
         <Route path="*" element={<HomePage />} />

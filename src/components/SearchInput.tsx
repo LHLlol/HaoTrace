@@ -37,6 +37,12 @@ export default function SearchInput({ value, onChange, onSubmit, placeholder = '
         aria-label="搜索模糊记忆"
         autoComplete="off"
         disabled={loading}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            if (value.trim() && !loading) onSubmit()
+          }
+        }}
       />
       {value && !loading && onClear && (
         <button className="clear-search" type="button" onClick={onClear} aria-label="清空搜索">
