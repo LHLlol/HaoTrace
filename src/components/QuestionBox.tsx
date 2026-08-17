@@ -6,9 +6,10 @@ interface QuestionBoxProps {
   value: string
   onChange: (value: string) => void
   onSubmit: () => void
+  onFocus?: () => void
 }
 
-export default function QuestionBox({ value, onChange, onSubmit }: QuestionBoxProps) {
+export default function QuestionBox({ value, onChange, onSubmit, onFocus }: QuestionBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -45,6 +46,7 @@ export default function QuestionBox({ value, onChange, onSubmit }: QuestionBoxPr
             aria-label="描述你想找的聊天记忆"
             autoComplete="off"
             enterKeyHint="search"
+            onFocus={onFocus}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault()

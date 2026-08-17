@@ -1,6 +1,6 @@
 import { ArrowUpRight, SearchX } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { suggestions } from './SearchSuggestions'
+import { suggestions } from '../lib/search/suggestions'
 
 export default function EmptyMemoryState({ onPick }: { onPick: (query: string) => void }) {
   return (

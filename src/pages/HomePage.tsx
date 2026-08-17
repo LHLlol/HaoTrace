@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import InteractiveDots from '../components/ui/interactive-dots'
 import QuestionBox from '../components/QuestionBox'
 import InlineSearchResults from '../components/InlineSearchResults'
+import SearchSuggestions from '../components/SearchSuggestions'
 import LogoMark from '../components/LogoMark'
 import { searchProvider } from '../lib/search'
 import type { SearchResult } from '../types/search'
@@ -18,11 +19,29 @@ export default function HomePage() {
   const [results, setResults] = useState<SearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState(false)
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false)
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('haotrace-recent-searches')
+      if (saved) setRecentSearches(JSON.parse(saved) as string[])
+    } catch {
+      setRecentSearches([])
+    }
+  }, [])
+
+  const rememberSearch = (value: string) => {
+    const next = [value, ...recentSearches.filter((item) => item !== value)].slice(0, 6)
+    setRecentSearches(next)
+    localStorage.setItem('haotrace-recent-searches', JSON.stringify(next))
+  }
 
   const search = () => {
     const normalizedQuery = query.trim()
     if (!normalizedQuery) return
 
+    rememberSearch(normalizedQuery)
     setSubmittedQuery(normalizedQuery)
     setSearchAttempt((attempt) => attempt + 1)
     setSearching(true)
@@ -52,6 +71,12 @@ export default function HomePage() {
     setResults([])
     setSearching(false)
     setError(false)
+    setSuggestionsOpen(false)
+  }
+
+  const pickSuggestion = (nextQuery: string) => {
+    setQuery(nextQuery)
+    setSuggestionsOpen(true)
   }
 
   return (
@@ -62,7 +87,7 @@ export default function HomePage() {
       </Link>
       <InteractiveDots spacing={34} dotRadius={6} repelForce={1} repelDistance={18000} returnSpeed={1.1} />
 
-      <div className="minimal-stage">
+      <div className={`minimal-stage${suggestionsOpen && !submittedQuery ? ' has-suggestions' : ''}`}>
         <motion.h1
           className="minimal-title"
           initial={reduceMotion ? false : { opacity: 0, y: -10 }}
@@ -79,7 +104,15 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: reduceMotion ? 0 : 0.55, ease }}
         >
-          <QuestionBox value={query} onChange={setQuery} onSubmit={search} />
+          <QuestionBox
+            value={query}
+            onChange={setQuery}
+            onSubmit={search}
+            onFocus={() => setSuggestionsOpen(true)}
+          />
+          {suggestionsOpen && !submittedQuery && (
+            <SearchSuggestions recentSearches={recentSearches} onPick={pickSuggestion} />
+          )}
           {submittedQuery && (
             <InlineSearchResults
               query={submittedQuery}
