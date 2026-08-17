@@ -6,6 +6,8 @@ HaoTrace 是一个本地优先的聊天记忆检索网页。它不要求用户�
 
 项目当前使用浏览器端加载的本地对话数据，并通过概念词、关键词、上下文和时间信息进行确定性的相关性排序。
 
+![HaoTrace 首页横屏预览（1280×720）](./design-qa-current.png)
+
 ## 功能
 
 - 黑色彩点交互背景和居中的记忆搜索入口
@@ -209,4 +211,4 @@ npm run build
 设计验收记录和截图见：
 
 - [`design-qa.md`](./design-qa.md)
-- [`design-qa-preview.png`](./design-qa-preview.
+- [`design-qa-preview.png`](./design-qa-preview.png)
