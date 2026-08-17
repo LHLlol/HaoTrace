@@ -209,4 +209,4 @@ npm run build
 设计验收记录和截图见：
 
 - [`design-qa.md`](./design-qa.md)
-- [`design-qa-preview.png`](./design-qa-preview.png)
+- [`design-qa-preview.png`](./design-qa-preview.
