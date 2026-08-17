@@ -27,6 +27,7 @@ export interface SearchResult {
 
 export interface SearchProvider {
   search(query: string, options?: SearchOptions): Promise<SearchResult[]>
+  importConversations?(conversations: Conversation[]): Promise<void>
 }
 
 export interface ParsedQuery {

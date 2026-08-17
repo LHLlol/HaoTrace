@@ -6,6 +6,7 @@ import QuestionBox from '../components/QuestionBox'
 import InlineSearchResults from '../components/InlineSearchResults'
 import SearchSuggestions from '../components/SearchSuggestions'
 import LogoMark from '../components/LogoMark'
+import DeveloperPanel from '../components/DeveloperPanel'
 import { searchProvider } from '../lib/search'
 import { appendRoundToken, getRoundPreset, removeRoundToken, type SearchRound } from '../lib/search/rounds'
 import type { SearchResult } from '../types/search'
@@ -27,6 +28,7 @@ export default function HomePage() {
   const [endDate, setEndDate] = useState<string | undefined>()
   const [datePickerOpen, setDatePickerOpen] = useState(false)
   const [selectedRound, setSelectedRound] = useState<SearchRound | undefined>()
+  const [developerMode, setDeveloperMode] = useState(false)
   const lastSearchSignature = useRef('')
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function HomePage() {
   }
 
   const search = () => {
+    if (developerMode) return
     const normalizedQuery = query.trim()
     if (!normalizedQuery) return
 
@@ -57,7 +60,7 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    if (!submittedQuery) return
+    if (!submittedQuery || developerMode) return
     const roundPreset = getRoundPreset(submittedQuery)
     const hasUnsubmittedQuery = query.trim() !== submittedQuery.trim()
     const effectiveStartDate = roundPreset?.startDate ?? (hasUnsubmittedQuery ? undefined : startDate)
@@ -77,9 +80,28 @@ export default function HomePage() {
       setError(true)
     })
     return () => { alive = false }
-  }, [query, submittedQuery, searchAttempt, startDate, endDate])
+  }, [developerMode, query, submittedQuery, searchAttempt, startDate, endDate])
 
   const handleQueryChange = (value: string) => {
+    if (!developerMode && value.trim() === '///') {
+      setDeveloperMode(true)
+      setQuery('')
+      setSubmittedQuery('')
+      setSearchAttempt(0)
+      setResults([])
+      setSearching(false)
+      setError(false)
+      setSuggestionsOpen(false)
+      setDatePickerOpen(false)
+      setStartDate(undefined)
+      setEndDate(undefined)
+      setSelectedRound(undefined)
+      return
+    }
+    if (developerMode) {
+      setQuery(value)
+      return
+    }
     setQuery(value)
     const roundPreset = getRoundPreset(value)
     if (roundPreset) {
@@ -129,6 +151,7 @@ export default function HomePage() {
     setEndDate(undefined)
     setDatePickerOpen(false)
     setSelectedRound(undefined)
+    setDeveloperMode(false)
     lastSearchSignature.current = ''
     setRecentSearches([])
     localStorage.removeItem('haotrace-recent-searches')
@@ -169,7 +192,7 @@ export default function HomePage() {
         </motion.h1>
 
         <motion.div
-          className={`minimal-search${submittedQuery ? ' has-results' : ''}${datePickerOpen ? ' date-picker-open' : ''}`}
+          className={`minimal-search${submittedQuery ? ' has-results' : ''}${datePickerOpen ? ' date-picker-open' : ''}${developerMode ? ' developer-mode' : ''}`}
           initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: reduceMotion ? 0 : 0.55, ease }}
@@ -178,7 +201,10 @@ export default function HomePage() {
             value={query}
             onChange={handleQueryChange}
             onSubmit={search}
-            onFocus={() => setSuggestionsOpen(true)}
+            onFocus={() => {
+              if (!developerMode) setSuggestionsOpen(true)
+            }}
+            developerMode={developerMode}
             startDate={startDate}
             endDate={endDate}
             onDateRangeChange={handleDateRangeChange}
@@ -193,10 +219,21 @@ export default function HomePage() {
               if (open) setSuggestionsOpen(false)
             }}
           />
-          {suggestionsOpen && !submittedQuery && (
+          {developerMode && (
+            <DeveloperPanel
+              onImport={async (payload) => {
+                await searchProvider.importConversations?.(payload.conversations)
+                setSubmittedQuery('')
+                setResults([])
+                setSearching(false)
+                setError(false)
+              }}
+            />
+          )}
+          {!developerMode && suggestionsOpen && !submittedQuery && (
             <SearchSuggestions recentSearches={recentSearches} onPick={pickSuggestion} />
           )}
-          {submittedQuery && (
+          {!developerMode && submittedQuery && (
             <InlineSearchResults
               query={submittedQuery}
               results={results}

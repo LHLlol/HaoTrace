@@ -17,9 +17,10 @@ interface QuestionBoxProps {
   selectedRound?: SearchRound
   onRoundSelect: (roundId?: SearchRound) => void
   onRoundPickerOpenChange?: (open: boolean) => void
+  developerMode?: boolean
 }
 
-export default function QuestionBox({ value, onChange, onSubmit, onFocus, startDate, endDate, onDateRangeChange, onDatePickerOpenChange, selectedRound, onRoundSelect, onRoundPickerOpenChange }: QuestionBoxProps) {
+export default function QuestionBox({ value, onChange, onSubmit, onFocus, startDate, endDate, onDateRangeChange, onDatePickerOpenChange, selectedRound, onRoundSelect, onRoundPickerOpenChange, developerMode = false }: QuestionBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -38,7 +39,7 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
           <RoundPicker selectedRound={selectedRound} onSelect={onRoundSelect} onOpenChange={onRoundPickerOpenChange} />
           <span className="question-box-kicker">
             <Sparkles size={12} strokeWidth={1.8} />
-            Search a memory
+            {developerMode ? 'Developer mode' : 'Search a memory'}
           </span>
           <DateRangePicker startDate={startDate} endDate={endDate} onChange={onDateRangeChange} onOpenChange={onDatePickerOpenChange} />
         </div>
@@ -51,7 +52,7 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
             onChange={(event) => onChange(event.target.value)}
             type="search"
             name="memory-query"
-            placeholder="我记得她以前好像说过……"
+            placeholder={developerMode ? '仅提交 TXT 文件，不执行搜索反馈' : '我记得她以前好像说过……'}
             aria-label="描述你想找的聊天记忆"
             autoComplete="off"
             enterKeyHint="search"
@@ -66,7 +67,7 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
         </div>
 
         <div className="question-box-footer">
-          <span>Describe what happened</span>
+          <span>{developerMode ? 'Input muted · TXT only' : 'Describe what happened'}</span>
           <button className="question-submit" type="submit" aria-label="搜索记忆">
             <ArrowUp size={17} strokeWidth={1.8} />
           </button>

@@ -246,6 +246,10 @@ export class MockSemanticSearch implements SearchProvider {
     private readonly primarySpeaker = '王木木',
   ) {}
 
+  async importConversations(conversations: Conversation[]) {
+    this.indexPromise = Promise.resolve(buildSearchIndex(conversations, this.primarySpeaker))
+  }
+
   async search(input: string, options: SearchOptions = {}) {
     await new Promise((resolve) => globalThis.setTimeout(resolve, 160))
     const query = parseQuery(input)
@@ -256,13 +260,6 @@ export class MockSemanticSearch implements SearchProvider {
       .map((message) => scoreMessage(message, conversation, query, options, index))
       .filter((result): result is SearchResult => Boolean(result)))
       .sort((a, b) => b.scores.final - a.scores.final)
-    const uniqueConversations: SearchResult[] = []
-    const seenConversations = new Set<string>()
-    for (const result of rankedResults) {
-      if (seenConversations.has(result.conversation.id)) continue
-      seenConversations.add(result.conversation.id)
-      uniqueConversations.push(result)
-    }
-    return uniqueConversations.slice(0, options.limit ?? 8)
+    return options.limit === undefined ? rankedResults : rankedResults.slice(0, options.limit)
   }
 }

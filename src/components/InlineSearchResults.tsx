@@ -49,19 +49,23 @@ export default function InlineSearchResults({ query, results, searching, error, 
               <span className="inline-search-query">“{query}”</span>
             </div>
             <div className="inline-result-list">
-              {results.slice(0, 6).map((result, index) => {
+              {results.map((result, index) => {
+                const animateRow = !reduceMotion && index < 24
                 return (
                   <motion.article
                     className="inline-result"
                     key={result.message.id}
-                    initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                    initial={animateRow ? { opacity: 0, y: 8 } : false}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: reduceMotion ? 0 : index * 0.045, duration: reduceMotion ? 0 : 0.28 }}
+                    transition={{ delay: animateRow ? Math.min(index * 0.018, 0.18) : 0, duration: animateRow ? 0.28 : 0 }}
                   >
                     <div className="inline-result-copy">
                       <p>{result.message.content}</p>
                     </div>
-                    <span className="inline-result-time">{result.message.timestamp.slice(11, 16)}</span>
+                    <time className="inline-result-meta" dateTime={result.message.timestamp}>
+                      <span>{result.message.date}</span>
+                      <strong>{result.message.timestamp.slice(11, 16)}</strong>
+                    </time>
                   </motion.article>
                 )
               })}
