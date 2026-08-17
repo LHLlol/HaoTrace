@@ -1,6 +1,7 @@
 import type { Conversation, Message } from '../../types/conversation'
 import type { ParsedQuery, SearchOptions, SearchProvider, SearchResult } from '../../types/search'
 import type { ConversationRepository } from '../data/conversationRepository'
+import { removeRoundToken } from './rounds'
 
 const conceptDictionary: Record<string, string[]> = {
   睡眠: ['熬夜', '晚睡', '睡太晚', '早起', '凌晨', '睡觉', '睡眠'],
@@ -101,7 +102,7 @@ function findDateParts(query: string) {
 }
 
 export function parseQuery(input: string): ParsedQuery {
-  const normalized = normalize(input)
+  const normalized = normalize(removeRoundToken(input))
   const terms = allTerms().filter((term) => normalized.includes(term.toLowerCase()))
   const concepts = [...new Set(terms.map((term) => conceptAliases[term] ?? Object.entries(conceptDictionary).find(([, values]) => values.includes(term))?.[0]).filter(Boolean))] as string[]
   const genericPieces = removeContainedTerms([
@@ -217,8 +218,17 @@ function scoreMessage(message: Message, conversation: Conversation, query: Parse
   if (options.endDate && message.date > options.endDate) return null
   const phrase = exactPhraseHit ? 1 : conversationPhraseHit ? 0.56 : 0
   const final = phrase * 0.58 + semantic * 0.2 + keyword * 0.22 + context * 0.06 + time * 0.03
-  if (final < (exactPhraseHit ? 0.1 : 0.14)) return null
   const contextSize = options.contextSize ?? 3
+  if (!query.normalized && (options.startDate || options.endDate)) {
+    return {
+      message,
+      conversation,
+      context: conversation.messages.slice(Math.max(0, messageIndex - contextSize), Math.min(conversation.messages.length, messageIndex + contextSize + 1)),
+      scores: { semantic: 0, keyword: 0, context: 0, time: 1, final: 1 },
+      matchedConcepts: [],
+    }
+  }
+  if (final < (exactPhraseHit ? 0.1 : 0.14)) return null
   return {
     message,
     conversation,
@@ -237,7 +247,7 @@ export class MockSemanticSearch implements SearchProvider {
   ) {}
 
   async search(input: string, options: SearchOptions = {}) {
-    await new Promise((resolve) => window.setTimeout(resolve, 160))
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 160))
     const query = parseQuery(input)
     this.indexPromise ??= this.repository.listConversations().then((conversations) => buildSearchIndex(conversations, this.primarySpeaker))
     const index = await this.indexPromise

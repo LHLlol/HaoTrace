@@ -1,15 +1,25 @@
-import { ArrowUp, AtSign, Sparkles } from 'lucide-react'
+import { ArrowUp, Sparkles } from 'lucide-react'
 import { type FormEvent, useRef } from 'react'
+import type { SearchRound } from '../lib/search/rounds'
 import { BorderBeam } from './ui/border-beam'
+import DateRangePicker from './DateRangePicker'
+import RoundPicker from './RoundPicker'
 
 interface QuestionBoxProps {
   value: string
   onChange: (value: string) => void
   onSubmit: () => void
   onFocus?: () => void
+  startDate?: string
+  endDate?: string
+  onDateRangeChange: (startDate?: string, endDate?: string) => void
+  onDatePickerOpenChange?: (open: boolean) => void
+  selectedRound?: SearchRound
+  onRoundSelect: (roundId?: SearchRound) => void
+  onRoundPickerOpenChange?: (open: boolean) => void
 }
 
-export default function QuestionBox({ value, onChange, onSubmit, onFocus }: QuestionBoxProps) {
+export default function QuestionBox({ value, onChange, onSubmit, onFocus, startDate, endDate, onDateRangeChange, onDatePickerOpenChange, selectedRound, onRoundSelect, onRoundPickerOpenChange }: QuestionBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -24,14 +34,13 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus }: Ques
   return (
     <BorderBeam className="question-beam" size="md" colorVariant="colorful" theme="dark" aria-label="浩迹记忆搜索">
       <form className="question-box" id="memory-search" onSubmit={handleSubmit}>
-        <div className="question-box-topline" aria-hidden="true">
-          <span className="question-box-chip" aria-hidden="true">
-            <AtSign size={15} strokeWidth={1.6} />
-          </span>
+        <div className="question-box-topline">
+          <RoundPicker selectedRound={selectedRound} onSelect={onRoundSelect} onOpenChange={onRoundPickerOpenChange} />
           <span className="question-box-kicker">
             <Sparkles size={12} strokeWidth={1.8} />
             Search a memory
           </span>
+          <DateRangePicker startDate={startDate} endDate={endDate} onChange={onDateRangeChange} onOpenChange={onDatePickerOpenChange} />
         </div>
 
         <div className={`question-box-editor${value ? ' has-value' : ''}`}>

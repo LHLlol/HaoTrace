@@ -1,4 +1,4 @@
-import { AlertCircle, LoaderCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { SearchResult } from '../types/search'
 
@@ -8,11 +8,6 @@ interface InlineSearchResultsProps {
   searching: boolean
   error: boolean
   onRetry: () => void
-}
-
-function resultDate(date: string) {
-  const [year, month, day] = date.split('-')
-  return { year, day: `${month}.${day}` }
 }
 
 export default function InlineSearchResults({ query, results, searching, error, onRetry }: InlineSearchResultsProps) {
@@ -30,9 +25,16 @@ export default function InlineSearchResults({ query, results, searching, error, 
         aria-live="polite"
       >
         {searching ? (
-          <div className="inline-search-status">
-            <LoaderCircle size={17} className="inline-search-loader" aria-hidden="true" />
-            <span>正在寻找相关片段</span>
+          <div className="inline-search-status memory-search-thinking" role="status" aria-live="polite">
+            <span className="memory-thinking-visual" aria-hidden="true">
+              <span className="memory-thinking-dot" />
+              <span className="memory-thinking-dot" />
+              <span className="memory-thinking-dot" />
+            </span>
+            <span className="memory-thinking-copy">
+              <strong>正在梳理这段记忆</strong>
+              <small>内容 · 语境 · 时间</small>
+            </span>
           </div>
         ) : error ? (
           <div className="inline-search-status inline-search-error">
@@ -48,7 +50,6 @@ export default function InlineSearchResults({ query, results, searching, error, 
             </div>
             <div className="inline-result-list">
               {results.slice(0, 6).map((result, index) => {
-                const date = resultDate(result.message.date)
                 return (
                   <motion.article
                     className="inline-result"
@@ -57,12 +58,7 @@ export default function InlineSearchResults({ query, results, searching, error, 
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: reduceMotion ? 0 : index * 0.045, duration: reduceMotion ? 0 : 0.28 }}
                   >
-                    <div className="inline-result-date">
-                      <span>{date.year}</span>
-                      <strong>{date.day}</strong>
-                    </div>
                     <div className="inline-result-copy">
-                      <span>{result.conversation.title}</span>
                       <p>{result.message.content}</p>
                     </div>
                     <span className="inline-result-time">{result.message.timestamp.slice(11, 16)}</span>

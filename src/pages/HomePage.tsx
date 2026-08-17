@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import InteractiveDots from '../components/ui/interactive-dots'
 import QuestionBox from '../components/QuestionBox'
@@ -7,6 +7,7 @@ import InlineSearchResults from '../components/InlineSearchResults'
 import SearchSuggestions from '../components/SearchSuggestions'
 import LogoMark from '../components/LogoMark'
 import { searchProvider } from '../lib/search'
+import { appendRoundToken, getRoundPreset, removeRoundToken, type SearchRound } from '../lib/search/rounds'
 import type { SearchResult } from '../types/search'
 
 const ease = [0.22, 1, 0.36, 1] as const
@@ -22,6 +23,11 @@ export default function HomePage() {
   const [error, setError] = useState(false)
   const [suggestionsOpen, setSuggestionsOpen] = useState(false)
   const [recentSearches, setRecentSearches] = useState<string[]>([])
+  const [startDate, setStartDate] = useState<string | undefined>()
+  const [endDate, setEndDate] = useState<string | undefined>()
+  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [selectedRound, setSelectedRound] = useState<SearchRound | undefined>()
+  const lastSearchSignature = useRef('')
 
   useEffect(() => {
     try {
@@ -52,8 +58,15 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!submittedQuery) return
+    const roundPreset = getRoundPreset(submittedQuery)
+    const hasUnsubmittedQuery = query.trim() !== submittedQuery.trim()
+    const effectiveStartDate = roundPreset?.startDate ?? (hasUnsubmittedQuery ? undefined : startDate)
+    const effectiveEndDate = roundPreset?.endDate ?? (hasUnsubmittedQuery ? undefined : endDate)
+    const signature = `${submittedQuery}\u0000${effectiveStartDate ?? ''}\u0000${effectiveEndDate ?? ''}\u0000${searchAttempt}`
+    if (lastSearchSignature.current === signature) return
+    lastSearchSignature.current = signature
     let alive = true
-    searchProvider.search(submittedQuery, { contextSize: 1 }).then((nextResults) => {
+    searchProvider.search(submittedQuery, { contextSize: 1, startDate: effectiveStartDate, endDate: effectiveEndDate }).then((nextResults) => {
       if (!alive) return
       setResults(nextResults)
       setSearching(false)
@@ -64,7 +77,45 @@ export default function HomePage() {
       setError(true)
     })
     return () => { alive = false }
-  }, [submittedQuery, searchAttempt])
+  }, [query, submittedQuery, searchAttempt, startDate, endDate])
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value)
+    const roundPreset = getRoundPreset(value)
+    if (roundPreset) {
+      setSelectedRound(roundPreset.id)
+      setStartDate(roundPreset.startDate)
+      setEndDate(roundPreset.endDate)
+    } else if (selectedRound) {
+      setSelectedRound(undefined)
+      setStartDate(undefined)
+      setEndDate(undefined)
+    }
+  }
+
+  const handleRoundSelect = (roundId?: SearchRound) => {
+    if (!roundId) {
+      setSelectedRound(undefined)
+      setStartDate(undefined)
+      setEndDate(undefined)
+      setQuery(removeRoundToken)
+      return
+    }
+
+    const roundPreset = getRoundPreset(`@${roundId}`)
+    setSelectedRound(roundId)
+    setStartDate(roundPreset?.startDate)
+    setEndDate(roundPreset?.endDate)
+    setQuery((current) => appendRoundToken(current, roundId))
+    setSuggestionsOpen(false)
+  }
+
+  const handleDateRangeChange = (nextStartDate?: string, nextEndDate?: string) => {
+    setSelectedRound(undefined)
+    setStartDate(nextStartDate)
+    setEndDate(nextEndDate)
+    setQuery(removeRoundToken)
+  }
 
   const resetSearch = () => {
     setQuery('')
@@ -74,6 +125,11 @@ export default function HomePage() {
     setSearching(false)
     setError(false)
     setSuggestionsOpen(false)
+    setStartDate(undefined)
+    setEndDate(undefined)
+    setDatePickerOpen(false)
+    setSelectedRound(undefined)
+    lastSearchSignature.current = ''
     setRecentSearches([])
     localStorage.removeItem('haotrace-recent-searches')
     navigate('/')
@@ -113,16 +169,29 @@ export default function HomePage() {
         </motion.h1>
 
         <motion.div
-          className={`minimal-search${submittedQuery ? ' has-results' : ''}`}
+          className={`minimal-search${submittedQuery ? ' has-results' : ''}${datePickerOpen ? ' date-picker-open' : ''}`}
           initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: reduceMotion ? 0 : 0.55, ease }}
         >
           <QuestionBox
             value={query}
-            onChange={setQuery}
+            onChange={handleQueryChange}
             onSubmit={search}
             onFocus={() => setSuggestionsOpen(true)}
+            startDate={startDate}
+            endDate={endDate}
+            onDateRangeChange={handleDateRangeChange}
+            onDatePickerOpenChange={(open) => {
+              setDatePickerOpen(open)
+              if (open) setSuggestionsOpen(false)
+            }}
+            selectedRound={selectedRound}
+            onRoundSelect={handleRoundSelect}
+            onRoundPickerOpenChange={(open) => {
+              setDatePickerOpen(open)
+              if (open) setSuggestionsOpen(false)
+            }}
           />
           {suggestionsOpen && !submittedQuery && (
             <SearchSuggestions recentSearches={recentSearches} onPick={pickSuggestion} />
