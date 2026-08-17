@@ -1,6 +1,6 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import InteractiveDots from '../components/ui/interactive-dots'
 import QuestionBox from '../components/QuestionBox'
 import InlineSearchResults from '../components/InlineSearchResults'
@@ -12,6 +12,7 @@ import type { SearchResult } from '../types/search'
 const ease = [0.22, 1, 0.36, 1] as const
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const reduceMotion = useReducedMotion()
   const [query, setQuery] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('')
@@ -65,13 +66,17 @@ export default function HomePage() {
     return () => { alive = false }
   }, [submittedQuery, searchAttempt])
 
-  const clearSearch = () => {
+  const resetSearch = () => {
     setQuery('')
     setSubmittedQuery('')
+    setSearchAttempt(0)
     setResults([])
     setSearching(false)
     setError(false)
     setSuggestionsOpen(false)
+    setRecentSearches([])
+    localStorage.removeItem('haotrace-recent-searches')
+    navigate('/')
   }
 
   const pickSuggestion = (nextQuery: string) => {
@@ -82,7 +87,16 @@ export default function HomePage() {
   return (
     <div className="dots-home">
       <a className="skip-link" href="#memory-search">跳到搜索框</a>
-      <Link to="/" className="minimal-corner-mark" aria-label="返回首页">
+      <Link
+        to="/"
+        className="minimal-corner-mark"
+        aria-label="重置搜索并回到首页"
+        title="重置搜索并清空记录"
+        onClick={(event) => {
+          event.preventDefault()
+          resetSearch()
+        }}
+      >
         <LogoMark />
       </Link>
       <InteractiveDots spacing={34} dotRadius={6} repelForce={1} repelDistance={18000} returnSpeed={1.1} />

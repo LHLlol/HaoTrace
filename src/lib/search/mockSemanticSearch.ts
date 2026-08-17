@@ -45,17 +45,29 @@ function allTerms() {
 }
 
 function normalize(value: string) {
-  return value.trim().toLowerCase().replace(/[“”‘’？！。，“”、；：]/g, ' ')
+  return value
+    .normalize('NFKC')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s\p{P}\p{S}]+/gu, '')
 }
 
-const queryStopWords = new Set(['她', '我', '以前', '之前', '时候', '一次', '有一次', '说过', '提到', '找一下', '找找', '聊天', '记录', '关于', '当时', '好像', '记得', '是不是', '有没有', '什么', '大概', '附近', '左右'])
+function normalizeForTokens(value: string) {
+  return value
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\u4e00-\u9fff]+/gu, ' ')
+    .trim()
+}
+
+const queryStopWords = new Set(['她', '我', '以前', '之前', '时候', '一次', '有一次', '说过', '提到', '找一下', '找找', '聊天', '记录', '关于', '当时', '好像', '记得', '是不是', '有没有', '什么', '大概', '附近', '左右', '一下', '那段', '那次', '相关', '内容'])
 
 function extractChineseChunks(value: string) {
-  const chunks = value.match(/[\u4e00-\u9fff]{2,}/g) ?? []
+  const chunks = normalize(value).match(/[\u4e00-\u9fff]{2,}/g) ?? []
   const terms: string[] = []
 
   for (const chunk of chunks) {
-    if (chunk.length <= 8 && !queryStopWords.has(chunk)) terms.push(chunk)
+    if (chunk.length <= 12 && !queryStopWords.has(chunk)) terms.push(chunk)
 
     for (const size of [2, 3, 4]) {
       if (chunk.length < size) continue
@@ -69,6 +81,19 @@ function extractChineseChunks(value: string) {
   return terms
 }
 
+function extractWordTokens(value: string) {
+  return normalizeForTokens(value)
+    .split(/\s+/)
+    .filter((piece) => piece.length > 1 && !queryStopWords.has(piece))
+}
+
+function removeContainedTerms(terms: string[]) {
+  return [...new Set(terms)]
+    .filter((term) => term.length > 1)
+    .sort((a, b) => b.length - a.length)
+    .filter((term, index, all) => !all.slice(0, index).some((longer) => longer.includes(term) && longer.length > term.length + 1))
+}
+
 function findDateParts(query: string) {
   const year = query.match(/20\d{2}/)?.[0]
   const month = query.match(/(?:年|\s)([1-9]|1[0-2])月/)?.[1]
@@ -79,12 +104,19 @@ export function parseQuery(input: string): ParsedQuery {
   const normalized = normalize(input)
   const terms = allTerms().filter((term) => normalized.includes(term.toLowerCase()))
   const concepts = [...new Set(terms.map((term) => conceptAliases[term] ?? Object.entries(conceptDictionary).find(([, values]) => values.includes(term))?.[0]).filter(Boolean))] as string[]
-  const genericPieces = [
-    ...normalized.split(/\s+/).filter((piece) => piece.length > 1 && !/^20\d{2}$/.test(piece)),
-    ...extractChineseChunks(normalized),
-  ]
+  const genericPieces = removeContainedTerms([
+    ...extractWordTokens(input).filter((piece) => !/^20\d{2}$/.test(piece)),
+    ...extractChineseChunks(input),
+  ])
   const { year, month } = findDateParts(normalized)
-  return { terms: [...new Set([...terms, ...genericPieces])], concepts, year, month }
+  return {
+    normalized,
+    terms: [...new Set([...terms, ...genericPieces, ...(normalized.length > 1 ? [normalized] : [])])],
+    tokens: genericPieces,
+    concepts,
+    year,
+    month,
+  }
 }
 
 function messageText(message: Message) {
@@ -107,54 +139,85 @@ interface SearchIndex {
   conversations: Conversation[]
   messageTexts: Map<string, string>
   messageConcepts: Map<string, string[]>
-  contextTexts: Map<string, string>
+  conversationMessageTexts: Map<string, string[]>
+  conversationTexts: Map<string, string>
 }
 
 function buildSearchIndex(conversations: Conversation[], primarySpeaker: string): SearchIndex {
   const messageTexts = new Map<string, string>()
   const messageConcepts = new Map<string, string[]>()
-  const contextTexts = new Map<string, string>()
+  const conversationMessageTexts = new Map<string, string[]>()
+  const conversationTexts = new Map<string, string>()
 
   for (const conversation of conversations) {
     const texts = conversation.messages.map((message) => {
       const text = messageText(message)
-      if (message.sender === primarySpeaker) {
-        messageTexts.set(message.id, text)
-        messageConcepts.set(message.id, conceptsForText(text))
-      }
+      messageTexts.set(message.id, text)
+      messageConcepts.set(message.id, conceptsForText(text))
       return text
     })
 
-    conversation.messages.forEach((message, index) => {
-      if (message.sender === primarySpeaker) {
-        contextTexts.set(message.id, texts.slice(Math.max(0, index - 2), Math.min(texts.length, index + 3)).join(' '))
-      }
-    })
+    conversationMessageTexts.set(conversation.id, texts)
+    conversationTexts.set(conversation.id, normalize([
+      conversation.title ?? '',
+      ...(conversation.topics ?? []),
+      ...texts,
+    ].join(' ')))
   }
 
-  return { conversations, messageTexts, messageConcepts, contextTexts }
+  void primarySpeaker
+  return { conversations, messageTexts, messageConcepts, conversationMessageTexts, conversationTexts }
+}
+
+function fuzzyTermScore(term: string, text: string) {
+  if (term.length < 3 || text.includes(term)) return text.includes(term) ? 1 : 0
+
+  const uniqueCharacters = [...new Set(term)]
+  const characterCoverage = uniqueCharacters.filter((character) => text.includes(character)).length / uniqueCharacters.length
+  if (characterCoverage < 0.75) return 0
+
+  let cursor = 0
+  let orderedMatches = 0
+  for (const character of term) {
+    const matchIndex = text.indexOf(character, cursor)
+    if (matchIndex < 0) continue
+    orderedMatches += 1
+    cursor = matchIndex + 1
+  }
+
+  const sequenceCoverage = orderedMatches / term.length
+  return sequenceCoverage >= 0.75 ? Math.min(0.78, sequenceCoverage * 0.86) : 0
 }
 
 function scoreMessage(message: Message, conversation: Conversation, query: ParsedQuery, options: SearchOptions, searchIndex: SearchIndex): SearchResult | null {
   const text = searchIndex.messageTexts.get(message.id) ?? ''
-  const termsHit = query.terms.filter((term) => text.includes(term.toLowerCase()))
+  const conversationText = searchIndex.conversationTexts.get(conversation.id) ?? ''
+  const exactPhraseHit = query.normalized.length > 1 && text.includes(query.normalized)
+  const termsHit = query.terms.filter((term) => (term.length > 1 || term === query.normalized) && text.includes(term.toLowerCase()))
+  const fuzzyTerms = query.tokens
+    .map((term) => ({ term, score: fuzzyTermScore(term, text) }))
+    .filter(({ score }) => score > 0)
   const messageConcepts = searchIndex.messageConcepts.get(message.id) ?? []
   const matchedConcepts = query.concepts.filter((concept) => messageConcepts.includes(concept))
-  const directTermHit = query.terms.some((term) => text.includes(term.toLowerCase()))
-  const semantic = query.concepts.length ? (matchedConcepts.length / query.concepts.length) * (directTermHit ? 1 : 0.62) : termsHit.length ? 0.42 : 0.1
-  const keyword = query.terms.length ? Math.min(1, termsHit.length / Math.min(query.terms.length, 4)) : 0
+  const directTermHit = termsHit.length > 0 || fuzzyTerms.length > 0
+  const semantic = query.concepts.length ? (matchedConcepts.length / query.concepts.length) * (directTermHit ? 1 : 0.72) : termsHit.length ? 0.42 : 0
+  const keywordBase = query.tokens.length ? fuzzyTerms.reduce((total, match) => total + match.score, 0) / query.tokens.length : 0
+  const keyword = Math.min(1, Math.max(keywordBase, exactPhraseHit ? 1 : 0))
   const messageIndex = conversation.messages.findIndex((candidate) => candidate.id === message.id)
-  const contextText = searchIndex.contextTexts.get(message.id) ?? ''
+  const messageTexts = searchIndex.conversationMessageTexts.get(conversation.id) ?? []
+  const contextText = messageTexts.slice(Math.max(0, messageIndex - 2), Math.min(messageTexts.length, messageIndex + 3)).join(' ')
   const contextHits = query.terms.filter((term) => contextText.includes(term.toLowerCase()))
-  const context = query.terms.length ? Math.min(1, contextHits.length / Math.min(query.terms.length + 1, 5)) : 0.2
+  const context = query.terms.length ? Math.min(1, contextHits.length / Math.min(query.terms.length + 1, 5)) : 0
+  const conversationPhraseHit = query.normalized.length > 1 && conversationText.includes(query.normalized) && contextText.includes(query.normalized)
   const yearMatches = query.year ? message.year === query.year : true
   const monthMatches = query.month ? message.month === query.month : true
   const time = query.year || query.month ? (yearMatches && monthMatches ? 1 : yearMatches || monthMatches ? 0.38 : 0) : 0.22
   if ((options.year && message.year !== options.year) || (options.month && message.month !== options.month)) return null
   if (options.startDate && message.date < options.startDate) return null
   if (options.endDate && message.date > options.endDate) return null
-  const final = semantic * 0.55 + keyword * 0.2 + context * 0.15 + time * 0.1
-  if (final < 0.13) return null
+  const phrase = exactPhraseHit ? 1 : conversationPhraseHit ? 0.56 : 0
+  const final = phrase * 0.58 + semantic * 0.2 + keyword * 0.22 + context * 0.06 + time * 0.03
+  if (final < (exactPhraseHit ? 0.1 : 0.14)) return null
   const contextSize = options.contextSize ?? 3
   return {
     message,
@@ -180,11 +243,16 @@ export class MockSemanticSearch implements SearchProvider {
     const index = await this.indexPromise
     const conversations = index.conversations
     const rankedResults = conversations.flatMap((conversation) => conversation.messages
-      .filter((message) => message.sender === this.primarySpeaker)
       .map((message) => scoreMessage(message, conversation, query, options, index))
       .filter((result): result is SearchResult => Boolean(result)))
       .sort((a, b) => b.scores.final - a.scores.final)
-    const uniqueConversations = [...new Map(rankedResults.map((result) => [result.conversation.id, result])).values()]
+    const uniqueConversations: SearchResult[] = []
+    const seenConversations = new Set<string>()
+    for (const result of rankedResults) {
+      if (seenConversations.has(result.conversation.id)) continue
+      seenConversations.add(result.conversation.id)
+      uniqueConversations.push(result)
+    }
     return uniqueConversations.slice(0, options.limit ?? 8)
   }
 }

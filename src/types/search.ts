@@ -30,7 +30,9 @@ export interface SearchProvider {
 }
 
 export interface ParsedQuery {
+  normalized: string
   terms: string[]
+  tokens: string[]
   concepts: string[]
   year?: number
   month?: number
