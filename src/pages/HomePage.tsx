@@ -26,7 +26,7 @@ export default function HomePage() {
   const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [startDate, setStartDate] = useState<string | undefined>()
   const [endDate, setEndDate] = useState<string | undefined>()
-  const [datePickerOpen, setDatePickerOpen] = useState(false)
+  const [secondaryPanelOpen, setSecondaryPanelOpen] = useState(false)
   const [selectedRound, setSelectedRound] = useState<SearchRound | undefined>()
   const [developerMode, setDeveloperMode] = useState(false)
   const lastSearchSignature = useRef('')
@@ -92,7 +92,7 @@ export default function HomePage() {
       setSearching(false)
       setError(false)
       setSuggestionsOpen(false)
-      setDatePickerOpen(false)
+      setSecondaryPanelOpen(false)
       setStartDate(undefined)
       setEndDate(undefined)
       setSelectedRound(undefined)
@@ -149,7 +149,7 @@ export default function HomePage() {
     setSuggestionsOpen(false)
     setStartDate(undefined)
     setEndDate(undefined)
-    setDatePickerOpen(false)
+    setSecondaryPanelOpen(false)
     setSelectedRound(undefined)
     setDeveloperMode(false)
     lastSearchSignature.current = ''
@@ -192,7 +192,7 @@ export default function HomePage() {
         </motion.h1>
 
         <motion.div
-          className={`minimal-search${submittedQuery ? ' has-results' : ''}${datePickerOpen ? ' date-picker-open' : ''}${developerMode ? ' developer-mode' : ''}`}
+          className={`minimal-search${submittedQuery ? ' has-results' : ''}${secondaryPanelOpen ? ' secondary-panel-open' : ''}${developerMode ? ' developer-mode' : ''}`}
           initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: reduceMotion ? 0 : 0.55, ease }}
@@ -209,13 +209,13 @@ export default function HomePage() {
             endDate={endDate}
             onDateRangeChange={handleDateRangeChange}
             onDatePickerOpenChange={(open) => {
-              setDatePickerOpen(open)
+              setSecondaryPanelOpen(open)
               if (open) setSuggestionsOpen(false)
             }}
             selectedRound={selectedRound}
             onRoundSelect={handleRoundSelect}
             onRoundPickerOpenChange={(open) => {
-              setDatePickerOpen(open)
+              setSecondaryPanelOpen(open)
               if (open) setSuggestionsOpen(false)
             }}
           />

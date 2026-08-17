@@ -238,9 +238,10 @@ body { color: var(--ink); }
 .minimal-title-cn { color: #f8f7ff; font-family: "ZCOOL KuaiLe", "Noto Sans JP", sans-serif; font-size: clamp(45px, 5.6vw, 78px); font-weight: 400; line-height: .9; letter-spacing: -.08em; text-shadow: 0 1px 0 rgba(255, 255, 255, .18); }
 .minimal-title-en { color: #f0effd; font-family: "Fredoka", "Arial Rounded MT Bold", "Avenir Next", sans-serif; font-size: clamp(20px, 2.2vw, 31px); font-weight: 700; line-height: .95; letter-spacing: -.06em; }
 .minimal-search { position: relative; z-index: 3; width: min(680px, calc(100vw - 36px)); }
-.minimal-search.date-picker-open::before { content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none; background: rgba(3, 4, 10, .28); backdrop-filter: blur(3px) saturate(.78); }
-.minimal-search.date-picker-open > .question-beam { position: relative; z-index: 5; }
-.minimal-search.date-picker-open > .suggestions-beam, .minimal-search.date-picker-open > .inline-search-results { position: relative; z-index: 1; filter: blur(2px) brightness(.72); opacity: .72; }
+/* Only calendar and @ secondary panels may focus the surrounding canvas. */
+.minimal-search.secondary-panel-open::before { content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none; background: rgba(3, 4, 10, .28); backdrop-filter: blur(3px) saturate(.78); }
+.minimal-search.secondary-panel-open > .question-beam { position: relative; z-index: 5; }
+.minimal-search.secondary-panel-open > .suggestions-beam, .minimal-search.secondary-panel-open > .inline-search-results { position: relative; z-index: 1; filter: blur(2px) brightness(.72); opacity: .72; }
 .question-beam { display: block; width: 100%; border-radius: 24px; }
 .question-beam[data-beam], .date-range-beam[data-beam] { overflow: visible; }
 .question-box { position: relative; width: 100%; min-height: 154px; display: flex; flex-direction: column; border: 1px solid rgba(255, 255, 255, .09); border-radius: 22px; padding: 10px 10px 11px; background: rgba(8, 10, 17, .96); box-shadow: 0 22px 70px rgba(0, 0, 0, .36), inset 0 1px 0 rgba(255, 255, 255, .055); }

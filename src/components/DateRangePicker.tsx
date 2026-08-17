@@ -184,7 +184,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, onOpenCh
                     <span>限定日期</span>
                     <strong>{formatRange(draftStart, draftEnd)}</strong>
                   </div>
-                  <button type="button" className="date-range-close" aria-label="关闭日期选择" onClick={() => setOpen(false)}>
+                  <button type="button" className="date-range-close" aria-label="关闭日期选择" onClick={closePicker}>
                     <X size={14} strokeWidth={1.8} aria-hidden="true" />
                   </button>
                 </div>
