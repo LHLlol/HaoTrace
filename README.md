@@ -1,4 +1,4 @@
-# HaoTrace · 浩迹
+# HaoTrace  浩迹
 
 发布网站https://lhllol.github.io/HaoTrace/
 
