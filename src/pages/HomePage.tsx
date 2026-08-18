@@ -34,8 +34,6 @@ export default function HomePage() {
   const [selectedRound, setSelectedRound] = useState<SearchRound | undefined>()
   const [developerMode, setDeveloperMode] = useState(false)
   const lastSearchSignature = useRef('')
-  const searchFinishPulseTimer = useRef<number | undefined>()
-  const [searchFinishPulse, setSearchFinishPulse] = useState(false)
 
   useEffect(() => {
     try {
@@ -63,7 +61,6 @@ export default function HomePage() {
     setSearching(true)
     setError(false)
     setResults([])
-    setSearchFinishPulse(false)
   }
 
   useEffect(() => {
@@ -85,12 +82,6 @@ export default function HomePage() {
         setResults(nextResults)
         setSearching(false)
         setError(nextError)
-        setSearchFinishPulse(true)
-        if (searchFinishPulseTimer.current !== undefined) window.clearTimeout(searchFinishPulseTimer.current)
-        searchFinishPulseTimer.current = window.setTimeout(() => {
-          setSearchFinishPulse(false)
-          searchFinishPulseTimer.current = undefined
-        }, reduceMotion ? 0 : 1200)
       }
       const remaining = Math.max(0, MIN_SEARCH_STATE_MS - (Date.now() - startedAt))
       if (remaining) finishTimer = window.setTimeout(applyResult, remaining)
@@ -107,7 +98,6 @@ export default function HomePage() {
     return () => {
       alive = false
       if (finishTimer !== undefined) window.clearTimeout(finishTimer)
-      if (searchFinishPulseTimer.current !== undefined) window.clearTimeout(searchFinishPulseTimer.current)
     }
   }, [developerMode, query, reduceMotion, submittedQuery, searchAttempt, startDate, endDate])
 
@@ -269,47 +259,34 @@ export default function HomePage() {
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: [1, 1, 0] }}
-            transition={{ duration: reduceMotion ? 0 : 0.42, ease }}
+            transition={{ duration: reduceMotion ? 0 : 0.36, ease }}
           >
             <motion.div
               className="search-focus-light"
               aria-hidden="true"
               initial={reduceMotion ? false : { opacity: 0 }}
               animate={reduceMotion ? { opacity: 0.46 } : { opacity: [0, 0.84, 0.42] }}
-              exit={reduceMotion ? undefined : { opacity: 0 }}
-              transition={{ duration: reduceMotion ? 0 : 0.42, ease }}
+              exit={reduceMotion ? undefined : { opacity: [0.42, 0.18, 0] }}
+              transition={{ duration: reduceMotion ? 0 : 0.36, ease }}
             />
             <motion.div
               className="search-focus-light-core"
               aria-hidden="true"
               initial={reduceMotion ? false : { opacity: 0, scale: 0.2 }}
-              animate={{ opacity: reduceMotion ? 0.5 : [0, 0.8, 0.28], scale: reduceMotion ? 1 : [0.2, 1, 0.92] }}
-              exit={reduceMotion ? undefined : { opacity: 0, scale: 1.35 }}
-              transition={{ duration: reduceMotion ? 0 : 0.5, ease }}
+              animate={{ opacity: reduceMotion ? 0.5 : [0, 0.8, 0.36], scale: reduceMotion ? 1 : [0.2, 1, 0.92] }}
+              exit={reduceMotion ? undefined : { opacity: [0.36, 0.48, 0], scale: [0.92, 0.38, 0.04] }}
+              transition={{ duration: reduceMotion ? 0 : 0.36, ease }}
             />
             <motion.div
               className="search-focus-orb"
               initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={reduceMotion ? undefined : { opacity: 0, scale: 0.92 }}
-              transition={{ duration: reduceMotion ? 0 : 0.34, ease }}
+              exit={reduceMotion ? undefined : { opacity: [1, 1, 0], scale: [1, 0.9, 0.78] }}
+              transition={{ duration: reduceMotion ? 0 : 0.36, ease }}
             >
               <AiLoader />
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {searchFinishPulse && (
-          <motion.div
-            className="search-finish-flare"
-            aria-hidden="true"
-            initial={reduceMotion ? false : { opacity: 0 }}
-            animate={reduceMotion ? { opacity: 0 } : { opacity: 0.72 }}
-            exit={reduceMotion ? undefined : { opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.26, ease }}
-          />
         )}
       </AnimatePresence>
 

@@ -16,9 +16,14 @@ export function AiLoader({
       aria-live="polite"
       aria-label={`${label}，${detail}`}
     >
-      <div className="loader" aria-hidden="true" />
+      <div className="loader-wrapper" aria-hidden="true">
+        <div className="loader" />
+      </div>
     </div>
   )
 }
+
+// Keep the shadcn-style named export available for direct component demos.
+export const Component = AiLoader
 
 export default AiLoader
