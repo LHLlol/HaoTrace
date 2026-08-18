@@ -8,6 +8,7 @@ interface InteractiveDotsProps {
   repelForce?: number
   repelDistance?: number
   returnSpeed?: number
+  paused?: boolean
   className?: string
   style?: React.CSSProperties
 }
@@ -43,13 +44,30 @@ export function InteractiveDots({
   repelForce = 0.6,
   repelDistance = 10000,
   returnSpeed = 1,
+  paused = false,
   className = '',
   style = {},
 }: InteractiveDotsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number | undefined>(undefined)
+  const updateRef = useRef<(() => void) | undefined>(undefined)
+  const pausedRef = useRef(paused)
+  const reducedMotionRef = useRef(false)
   const dotsRef = useRef<Dot[]>([])
   const mouseRef = useRef({ x: -99999, y: -99999 })
+
+  useEffect(() => {
+    pausedRef.current = paused
+    if (paused) {
+      if (animationRef.current !== undefined) window.cancelAnimationFrame(animationRef.current)
+      animationRef.current = undefined
+      return
+    }
+
+    if (!reducedMotionRef.current && animationRef.current === undefined && updateRef.current) {
+      animationRef.current = window.requestAnimationFrame(updateRef.current)
+    }
+  }, [paused])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -59,6 +77,7 @@ export function InteractiveDots({
     if (!context) return
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    reducedMotionRef.current = reducedMotion
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
 
     const drawDot = (dot: Dot, ctx: CanvasRenderingContext2D) => {
@@ -98,6 +117,7 @@ export function InteractiveDots({
     }
 
     const update = () => {
+      animationRef.current = undefined
       const width = window.innerWidth
       const height = window.innerHeight
       context.clearRect(0, 0, width, height)
@@ -123,10 +143,11 @@ export function InteractiveDots({
         drawDot(dot, context)
       })
 
-      if (!reducedMotion) {
+      if (!reducedMotion && !pausedRef.current) {
         animationRef.current = window.requestAnimationFrame(update)
       }
     }
+    updateRef.current = update
 
     const handlePointerMove = (event: MouseEvent | TouchEvent) => {
       if (event instanceof MouseEvent) {
@@ -137,7 +158,7 @@ export function InteractiveDots({
     }
 
     resizeCanvas()
-    update()
+    if (!pausedRef.current) update()
 
     window.addEventListener('resize', resizeCanvas)
     window.addEventListener('mousemove', handlePointerMove)
@@ -145,6 +166,8 @@ export function InteractiveDots({
 
     return () => {
       if (animationRef.current !== undefined) window.cancelAnimationFrame(animationRef.current)
+      animationRef.current = undefined
+      if (updateRef.current === update) updateRef.current = undefined
       window.removeEventListener('resize', resizeCanvas)
       window.removeEventListener('mousemove', handlePointerMove)
       window.removeEventListener('touchmove', handlePointerMove)
