@@ -14,6 +14,7 @@ interface DateRangePickerProps {
   endDate?: string
   onChange: (startDate?: string, endDate?: string) => void
   onOpenChange?: (open: boolean) => void
+  disabled?: boolean
 }
 
 function pad(value: number) {
@@ -62,7 +63,7 @@ function isBetween(value: string, startDate?: string, endDate?: string) {
   return Boolean(startDate && endDate && value > startDate && value < endDate)
 }
 
-export default function DateRangePicker({ startDate, endDate, onChange, onOpenChange }: DateRangePickerProps) {
+export default function DateRangePicker({ startDate, endDate, onChange, onOpenChange, disabled = false }: DateRangePickerProps) {
   const reduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
   const [visibleMonth, setVisibleMonth] = useState(MAX_MONTH)
@@ -163,6 +164,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, onOpenCh
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={openPicker}
+        disabled={disabled}
       >
         <CalendarDays size={12} strokeWidth={1.8} aria-hidden="true" />
         <span>{hasSelection ? formatRange(startDate, endDate) : 'Any date'}</span>

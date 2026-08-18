@@ -13,6 +13,10 @@ interface InlineSearchResultsProps {
 export default function InlineSearchResults({ query, results, searching, error, onRetry }: InlineSearchResultsProps) {
   const reduceMotion = useReducedMotion()
 
+  // The landing page renders the richer full-screen loader while searching.
+  // Keep this component focused on the result/error/empty states.
+  if (searching) return null
+
   return (
     <AnimatePresence initial={false} mode="wait">
       <motion.section
@@ -24,19 +28,7 @@ export default function InlineSearchResults({ query, results, searching, error, 
         transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
         aria-live="polite"
       >
-        {searching ? (
-          <div className="inline-search-status memory-search-thinking" role="status" aria-live="polite">
-            <span className="memory-thinking-visual" aria-hidden="true">
-              <span className="memory-thinking-dot" />
-              <span className="memory-thinking-dot" />
-              <span className="memory-thinking-dot" />
-            </span>
-            <span className="memory-thinking-copy">
-              <strong>正在梳理这段记忆</strong>
-              <small>内容 · 语境 · 时间</small>
-            </span>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="inline-search-status inline-search-error">
             <AlertCircle size={17} aria-hidden="true" />
             <span>暂时无法打开记忆索引</span>

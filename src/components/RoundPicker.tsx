@@ -8,9 +8,10 @@ interface RoundPickerProps {
   selectedRound?: SearchRound
   onSelect: (roundId?: SearchRound) => void
   onOpenChange?: (open: boolean) => void
+  disabled?: boolean
 }
 
-export default function RoundPicker({ selectedRound, onSelect, onOpenChange }: RoundPickerProps) {
+export default function RoundPicker({ selectedRound, onSelect, onOpenChange, disabled = false }: RoundPickerProps) {
   const reduceMotion = useReducedMotion()
   const [open, setOpen] = useState(false)
 
@@ -54,6 +55,7 @@ export default function RoundPicker({ selectedRound, onSelect, onOpenChange }: R
         aria-haspopup="dialog"
         title="快速选择 @round 时间阶段"
         onClick={togglePicker}
+        disabled={disabled}
       >
         <AtSign size={15} strokeWidth={1.6} aria-hidden="true" />
       </button>

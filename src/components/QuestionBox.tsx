@@ -10,6 +10,7 @@ interface QuestionBoxProps {
   onChange: (value: string) => void
   onSubmit: () => void
   onFocus?: () => void
+  loading?: boolean
   startDate?: string
   endDate?: string
   onDateRangeChange: (startDate?: string, endDate?: string) => void
@@ -20,11 +21,12 @@ interface QuestionBoxProps {
   developerMode?: boolean
 }
 
-export default function QuestionBox({ value, onChange, onSubmit, onFocus, startDate, endDate, onDateRangeChange, onDatePickerOpenChange, selectedRound, onRoundSelect, onRoundPickerOpenChange, developerMode = false }: QuestionBoxProps) {
+export default function QuestionBox({ value, onChange, onSubmit, onFocus, loading = false, startDate, endDate, onDateRangeChange, onDatePickerOpenChange, selectedRound, onRoundSelect, onRoundPickerOpenChange, developerMode = false }: QuestionBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (loading) return
     if (!value.trim()) {
       inputRef.current?.focus()
       return
@@ -34,14 +36,14 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
 
   return (
     <BorderBeam className="question-beam" size="md" colorVariant="colorful" theme="dark" aria-label="浩迹记忆搜索">
-      <form className="question-box" id="memory-search" onSubmit={handleSubmit}>
+      <form className={`question-box${loading ? ' is-loading' : ''}`} id="memory-search" onSubmit={handleSubmit} aria-busy={loading}>
         <div className="question-box-topline">
-          <RoundPicker selectedRound={selectedRound} onSelect={onRoundSelect} onOpenChange={onRoundPickerOpenChange} />
+          <RoundPicker selectedRound={selectedRound} onSelect={onRoundSelect} onOpenChange={onRoundPickerOpenChange} disabled={loading} />
           <span className="question-box-kicker">
             <Sparkles size={12} strokeWidth={1.8} />
             {developerMode ? 'Developer mode' : 'Search a memory'}
           </span>
-          <DateRangePicker startDate={startDate} endDate={endDate} onChange={onDateRangeChange} onOpenChange={onDatePickerOpenChange} />
+          <DateRangePicker startDate={startDate} endDate={endDate} onChange={onDateRangeChange} onOpenChange={onDatePickerOpenChange} disabled={loading} />
         </div>
 
         <div className={`question-box-editor${value ? ' has-value' : ''}`}>
@@ -56,11 +58,12 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
             aria-label="描述你想找的聊天记忆"
             autoComplete="off"
             enterKeyHint="search"
+            disabled={loading}
             onFocus={onFocus}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault()
-                if (value.trim()) onSubmit()
+                if (value.trim() && !loading) onSubmit()
               }
             }}
           />
@@ -68,7 +71,7 @@ export default function QuestionBox({ value, onChange, onSubmit, onFocus, startD
 
         <div className="question-box-footer">
           <span>{developerMode ? 'Input muted · TXT only' : 'Describe what happened'}</span>
-          <button className="question-submit" type="submit" aria-label="搜索记忆">
+          <button className="question-submit" type="submit" aria-label="搜索记忆" disabled={loading}>
             <ArrowUp size={17} strokeWidth={1.8} />
           </button>
         </div>
