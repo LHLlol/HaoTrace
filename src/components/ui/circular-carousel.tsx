@@ -257,10 +257,13 @@ export function CircularCarousel({
                     event.preventDefault()
                     return
                   }
-                  goTo(index)
+                  if (!isActive) {
+                    goTo(index)
+                    return
+                  }
                   onItemSelect?.(item, index)
                 }}
-                aria-label={`选择记忆：${item.title}`}
+                aria-label={isActive ? `确认选择记忆：${item.title}` : `将记忆移到最前面：${item.title}`}
                 aria-selected={isActive}
                 role="option"
               >
