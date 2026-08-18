@@ -59,6 +59,7 @@ export function InteractiveDots({
   useEffect(() => {
     pausedRef.current = paused
     if (paused) {
+      mouseRef.current = { x: -99999, y: -99999 }
       if (animationRef.current !== undefined) window.cancelAnimationFrame(animationRef.current)
       animationRef.current = undefined
       return
@@ -97,9 +98,15 @@ export function InteractiveDots({
       canvas.height = Math.floor(height * pixelRatio)
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
 
+      const columns = Math.max(1, Math.floor(width / spacing))
+      const rows = Math.max(1, Math.floor(height / spacing))
+      const xOffset = (width - (columns - 1) * spacing) / 2
+      const yOffset = (height - (rows - 1) * spacing) / 2
       const dots: Dot[] = []
-      for (let x = spacing / 2; x < width; x += spacing) {
-        for (let y = spacing / 2; y < height; y += spacing) {
+      for (let column = 0; column < columns; column += 1) {
+        const x = xOffset + column * spacing
+        for (let row = 0; row < rows; row += 1) {
+          const y = yOffset + row * spacing
           dots.push({
             x,
             y,
@@ -155,7 +162,17 @@ export function InteractiveDots({
       } else if (event.touches.length > 0) {
         mouseRef.current = { x: event.touches[0].clientX, y: event.touches[0].clientY }
       }
+      if (idlePointerTimer !== undefined) window.clearTimeout(idlePointerTimer)
+      idlePointerTimer = window.setTimeout(resetPointer, 240)
     }
+    const resetPointer = () => {
+      if (idlePointerTimer !== undefined) {
+        window.clearTimeout(idlePointerTimer)
+        idlePointerTimer = undefined
+      }
+      mouseRef.current = { x: -99999, y: -99999 }
+    }
+    let idlePointerTimer: number | undefined
 
     resizeCanvas()
     if (!pausedRef.current) update()
@@ -163,14 +180,23 @@ export function InteractiveDots({
     window.addEventListener('resize', resizeCanvas)
     window.addEventListener('mousemove', handlePointerMove)
     window.addEventListener('touchmove', handlePointerMove, { passive: true })
+    window.addEventListener('mouseleave', resetPointer)
+    window.addEventListener('blur', resetPointer)
+    window.addEventListener('touchend', resetPointer, { passive: true })
+    window.addEventListener('touchcancel', resetPointer, { passive: true })
 
     return () => {
       if (animationRef.current !== undefined) window.cancelAnimationFrame(animationRef.current)
       animationRef.current = undefined
+      if (idlePointerTimer !== undefined) window.clearTimeout(idlePointerTimer)
       if (updateRef.current === update) updateRef.current = undefined
       window.removeEventListener('resize', resizeCanvas)
       window.removeEventListener('mousemove', handlePointerMove)
       window.removeEventListener('touchmove', handlePointerMove)
+      window.removeEventListener('mouseleave', resetPointer)
+      window.removeEventListener('blur', resetPointer)
+      window.removeEventListener('touchend', resetPointer)
+      window.removeEventListener('touchcancel', resetPointer)
     }
   }, [colors, dotRadius, repelDistance, repelForce, returnSpeed, spacing])
 

@@ -250,7 +250,7 @@ export default function HomePage() {
       >
         <LogoMark />
       </Link>
-      <InteractiveDots paused={searching} spacing={34} dotRadius={6} repelForce={1} repelDistance={18000} returnSpeed={1.1} />
+      <InteractiveDots paused={searching} spacing={34} dotRadius={6} repelForce={0} repelDistance={18000} returnSpeed={1.1} />
 
       <AnimatePresence>
         {searching && (
