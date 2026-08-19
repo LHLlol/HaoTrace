@@ -130,6 +130,37 @@ a { color: inherit; text-decoration: none; }
 .memory-principles h3 { margin: 0 0 7px; font: 400 22px var(--serif); letter-spacing: -.03em; }.memory-principles p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .home-footer { width: min(1280px, calc(100% - 72px)); margin: 0 auto; border-top: 1px solid var(--line); padding: 22px 0 34px; display: flex; justify-content: space-between; color: var(--faint); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 
+.site-footer {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  border-top: 0;
+  color: #8c90a0;
+  background: transparent;
+}
+.site-footer-inner { position: relative; width: min(840px, calc(100% - 48px)); margin: 0 auto; padding: 64px 0 28px; text-align: center; }
+.footer-brand { display: flex; width: fit-content; align-items: baseline; justify-content: center; gap: 10px; margin: 0 auto 28px; border-radius: 9px; opacity: .9; transition: opacity .2s ease, transform .2s ease; }
+.footer-brand:hover { opacity: 1; transform: translateY(-2px); }
+.footer-brand:focus-visible, .site-footer-nav a:focus-visible, .site-footer-icon-links a:focus-visible, .site-footer-meta a:focus-visible { outline: 2px solid #f2f0ff; outline-offset: 4px; border-radius: 4px; }
+.footer-brand-copy { display: inline-flex; align-items: baseline; gap: 6px; }
+.footer-brand-cn { color: #f8f7ff; font-family: "ZCOOL KuaiLe", "Noto Sans JP", sans-serif; font-size: 26px; font-weight: 400; line-height: .9; letter-spacing: -.08em; text-shadow: 0 1px 0 rgba(255, 255, 255, .14); }
+.footer-brand-en { color: #f0effd; font-family: "Fredoka", "Arial Rounded MT Bold", "Avenir Next", sans-serif; font-size: 14px; font-weight: 700; line-height: .95; letter-spacing: -.06em; }
+.site-footer-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin: 0 auto 27px; }
+.site-footer-nav a { color: #9094a4; font-size: 11px; transition: color .2s ease; }
+.site-footer-nav a:hover, .site-footer-meta a:hover { color: #f0effd; }
+.site-footer-icon-links { display: flex; justify-content: center; gap: 21px; margin: 0 auto 28px; }
+.site-footer-icon-links a { display: grid; width: 22px; height: 22px; place-items: center; color: #73788a; transition: color .2s ease, transform .2s ease; }
+.site-footer-icon-links a:hover { color: #d8a9ff; transform: translateY(-2px); }
+.site-footer-meta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 7px; padding-top: 19px; border-top: 1px solid rgba(255, 255, 255, .09); color: #5f6475; font-size: 10px; line-height: 1.6; }
+.site-footer-meta a { color: #73788a; transition: color .2s ease; }
+.footer-meta-dot { color: #3f4351; }
+
+@media (max-width: 520px) {
+  .site-footer-inner { width: calc(100% - 36px); padding-top: 50px; }
+  .site-footer-nav { gap: 19px; margin-bottom: 24px; }
+  .site-footer-meta { gap: 4px 7px; }
+}
+
 .page-content { width: min(1150px, calc(100% - 72px)); margin: 0 auto; padding-bottom: 90px; }
 .search-page-head { position: relative; min-height: 314px; padding: 40px 0 55px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: space-between; }
 .back-link { color: var(--muted); display: inline-flex; align-items: center; gap: 7px; font-size: 11px; margin-bottom: 56px; transition: color .2s ease, transform .2s ease; }.back-link:hover { color: var(--coral); transform: translateX(-3px); }
@@ -473,6 +504,13 @@ body { color: var(--ink); }
 /* The second act of the landing page: memory traces orbit below the first question. */
 .landing-shell { overflow: visible; }
 .dots-home { overflow-x: clip; overflow-y: visible; }
+.landing-lower {
+  position: relative;
+  z-index: 2;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(124, 87, 255, .08), transparent 23%),
+    linear-gradient(180deg, rgba(6, 7, 11, 0) 0%, rgba(6, 7, 11, .34) 18%, rgba(6, 7, 11, .88) 52%, #06070b 71%, #06070b 100%);
+}
 .memory-atlas {
   position: relative;
   z-index: 2;
@@ -480,9 +518,7 @@ body { color: var(--ink); }
   min-height: 480px;
   margin: 28px 0 0;
   padding: 0 max(36px, calc((100% - 1120px) / 2)) 70px;
-  background:
-    radial-gradient(circle at 50% 34%, rgba(124, 87, 255, .1), transparent 27%),
-    linear-gradient(180deg, rgba(6, 7, 11, 0) 0%, rgba(6, 7, 11, .34) 25%, rgba(6, 7, 11, .88) 68%, #06070b 100%);
+  background: transparent;
 }
 .memory-atlas-orbit { position: relative; z-index: 1; width: min(860px, 100%); min-width: 0; margin: 0 auto; }
 .memory-atlas.is-pushed-down { margin-top: 44px; }

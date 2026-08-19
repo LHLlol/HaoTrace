@@ -9,6 +9,7 @@ import LogoMark from '../components/LogoMark'
 import DeveloperPanel from '../components/DeveloperPanel'
 import CircularCarousel, { type CarouselItem } from '../components/ui/circular-carousel'
 import AiLoader from '../components/ui/ai-loader'
+import FooterSection from '../components/ui/footer'
 import { searchProvider } from '../lib/search'
 import { appendRoundToken, getRoundPreset, removeRoundToken, type SearchRound } from '../lib/search/rounds'
 import { suggestions } from '../lib/search/suggestions'
@@ -357,20 +358,24 @@ export default function HomePage() {
         </motion.div>
       </div>
 
-      {!developerMode && (
-        <motion.section
-          className={`memory-atlas${(suggestionsOpen || submittedQuery) ? ' is-pushed-down' : ''}`}
-          aria-label="记忆搜索菜单"
-          initial={reduceMotion ? false : { opacity: 0, y: 34 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.18 }}
-          transition={{ duration: reduceMotion ? 0 : 0.72, ease }}
-        >
-          <div className="memory-atlas-orbit">
-            <CircularCarousel items={memoryItems} onItemSelect={(item) => pickMemory(item.title)} />
-          </div>
-        </motion.section>
-      )}
+      <div className="landing-lower">
+        {!developerMode && (
+          <motion.section
+            className={`memory-atlas${(suggestionsOpen || submittedQuery) ? ' is-pushed-down' : ''}`}
+            aria-label="记忆搜索菜单"
+            initial={reduceMotion ? false : { opacity: 0, y: 34 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.18 }}
+            transition={{ duration: reduceMotion ? 0 : 0.72, ease }}
+          >
+            <div className="memory-atlas-orbit">
+              <CircularCarousel items={memoryItems} onItemSelect={(item) => pickMemory(item.title)} />
+            </div>
+          </motion.section>
+        )}
+
+        <FooterSection />
+      </div>
     </div>
   )
 }

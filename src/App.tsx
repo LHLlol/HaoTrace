@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import ConversationPage from './pages/ConversationPage'
 import TimelinePage from './pages/TimelinePage'
 import LogoMark from './components/LogoMark'
+import FooterSection from './components/ui/footer'
 
 const ease = [0.22, 1, 0.36, 1] as const
 const appBasePath = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -49,6 +50,7 @@ function PageFrame({ children }: { children: React.ReactNode }) {
           {children}
         </motion.main>
       </AnimatePresence>
+      {!isLandingPage && <FooterSection />}
       {!isLandingPage && <div className="grain" aria-hidden="true" />}
     </div>
   )
